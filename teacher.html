@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internship Department Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">STAGE</a>
+            <ul class="nav-links">
+                <li><a href="index.html">About</a></li>
+                <li><a href="index.html">Features</a></li>
+                <li><a href="index.html">Location</a></li>
+                <li><a href="login.html">Register</a></li>
+                <li><a href="student.html">Students</a></li>
+                <li><a href="teacher.html">Teachers</a></li>
+            </ul>
+            <button class="register-btn glow-effect" onclick="window.location.href='login.html'">Login</button>
+            <button class="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard -->
+    <div class="dashboard-container">
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Stats Overview -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-title">Total Applications</div>
+                    <div class="stat-value">150</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Approved</div>
+                    <div class="stat-value">65</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Pending</div>
+                    <div class="stat-value">45</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Rejected</div>
+                    <div class="stat-value">40</div>
+                </div>
+            </div>
+
+            <!-- Applications Table -->
+            <div class="applications-table">
+                <div class="table-header">
+                    <h2>Applications</h2>
+                    <div class="search-filters">
+                        <input type="text" class="search-input" placeholder="Search by name...">
+                        <select class="filter-select" id="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                        <select class="filter-select" id="specializationFilter">
+                            <option value="">All Specializations</option>
+                            <option value="computer-science">Computer Science</option>
+                            <option value="engineering">Engineering</option>
+                            <option value="business">Business</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Specialization</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="applicationsTableBody">
+                            <!-- Table rows will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Panel -->
+        <div class="notifications-panel">
+            <h2>Notifications</h2>
+            <div id="notificationsList">
+                <!-- Notifications will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Modal -->
+    <div class="modal" id="messageModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Send Message</h2>
+            <form class="message-form" id="messageForm">
+                <textarea placeholder="Type your message here..." rows="4"></textarea>
+                <button type="submit" class="btn btn-approve">Send Message</button>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+        // Sample data for applications
+        const applications = [
+            { id: 1, name: "John Doe", specialization: "Computer Science", status: "pending" },
+            { id: 2, name: "Jane Smith", specialization: "Engineering", status: "approved" },
+            { id: 3, name: "Mike Johnson", specialization: "Business", status: "rejected" },
+            // Add more sample data as needed
+        ];
+
+        // Sample notifications
+        const notifications = [
+            { id: 1, message: "New application received from John Doe", time: "5 minutes ago" },
+            { id: 2, message: "Jane Smith accepted the internship offer", time: "1 hour ago" },
+            // Add more notifications as needed
+        ];
+
+        // DOM Elements
+        const applicationsTableBody = document.getElementById('applicationsTableBody');
+        const notificationsList = document.getElementById('notificationsList');
+        const searchInput = document.querySelector('.search-input');
+        const statusFilter = document.getElementById('statusFilter');
+        const specializationFilter = document.getElementById('specializationFilter');
+        const messageModal = document.getElementById('messageModal');
+        const closeModal = document.querySelector('.close-modal');
+
+        // Render applications table
+        function renderApplications(apps) {
+            applicationsTableBody.innerHTML = apps.map(app => `
+                <tr>
+                    <td>${app.name}</td>
+                    <td>${app.specialization}</td>
+                    <td><span class="status-badge status-${app.status}">${app.status}</span></td>
+                    <td class="action-buttons">
+                        <button class="btn btn-approve" onclick="updateStatus(${app.id}, 'approved')">Approve</button>
+                        <button class="btn btn-reject" onclick="updateStatus(${app.id}, 'rejected')">Reject</button>
+                        <button class="btn btn-info" onclick="openMessageModal(${app.id})">Message</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Render notifications
+        function renderNotifications() {
+            notificationsList.innerHTML = notifications.map(notif => `
+                <div class="notification-item">
+                    <div>${notif.message}</div>
+                    <div class="notification-time">${notif.time}</div>
+                </div>
+            `).join('');
+        }
+
+        // Filter applications
+        function filterApplications() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const statusValue = statusFilter.value;
+            const specializationValue = specializationFilter.value;
+
+            const filtered = applications.filter(app => {
+                const matchesSearch = app.name.toLowerCase().includes(searchTerm);
+                const matchesStatus = !statusValue || app.status === statusValue;
+                const matchesSpecialization = !specializationValue || 
+                    app.specialization.toLowerCase() === specializationValue;
+                return matchesSearch && matchesStatus && matchesSpecialization;
+            });
+
+            renderApplications(filtered);
+        }
+
+        // Update application status
+        function updateStatus(id, newStatus) {
+            const application = applications.find(app => app.id === id);
+            if (application) {
+                application.status = newStatus;
+                filterApplications();
+                
+                // Add notification
+                notifications.unshift({
+                    id: notifications.length + 1,
+                    message: `Application status updated for ${application.name}`,
+                    time: 'Just now'
+                });
+                renderNotifications();
+            }
+        }
+
+        // Message modal functions
+        function openMessageModal(id) {
+            messageModal.style.display = 'block';
+        }
+
+        closeModal.onclick = function() {
+            messageModal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target === messageModal) {
+                messageModal.style.display = 'none';
+            }
+        }
+
+        // Form submission
+        document.getElementById('messageForm').onsubmit = function(e) {
+            e.preventDefault();
+            const message = this.querySelector('textarea').value;
+            if (message.trim()) {
+                // Add notification
+                notifications.unshift({
+                    id: notifications.length + 1,
+                    message: "Message sent to student",
+                    time: 'Just now'
+                });
+                renderNotifications();
+                messageModal.style.display = 'none';
+                this.reset();
+            }
+        }
+
+        // Event listeners
+        searchInput.addEventListener('input', filterApplications);
+        statusFilter.addEventListener('change', filterApplications);
